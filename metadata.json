@@ -1,0 +1,5 @@
+{
+  "name": "Gestión de Clínica AAUCA",
+  "description": "Un sistema integral de gestión clínica para AAUCA, con registros de pacientes, consultas, seguimiento de hospitalización y gestión de inventario.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,100 @@
+{
+  "entities": {
+    "Patient": {
+      "title": "Paciente",
+      "description": "Un paciente registrado en la clínica.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Número de historia clínica único." },
+        "name": { "type": "string", "description": "Nombre completo del paciente." },
+        "dob": { "type": "string", "format": "date", "description": "Fecha de nacimiento." },
+        "gender": { "type": "string", "enum": ["Masculino", "Femenino", "Otro"] },
+        "history": { "type": "string", "description": "Historial médico." },
+        "familyHistory": { "type": "string", "description": "Antecedentes familiares." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "dob", "gender"]
+    },
+    "Consultation": {
+      "title": "Consulta",
+      "description": "Un registro de consulta médica.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string", "description": "Referencia al paciente." },
+        "doctorId": { "type": "string", "description": "Referencia al médico." },
+        "reason": { "type": "string", "description": "Motivo de la visita." },
+        "diagnosis": { "type": "string", "description": "Diagnóstico médico." },
+        "treatment": { "type": "string", "description": "Tratamiento prescrito." },
+        "recommendations": { "type": "string", "description": "Recomendaciones del médico." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "doctorId", "reason"]
+    },
+    "Hospitalization": {
+      "title": "Hospitalización",
+      "description": "Un registro de la hospitalización de un paciente.",
+      "type": "object",
+      "properties": {
+        "patientId": { "type": "string", "description": "Referencia al paciente." },
+        "bed": { "type": "string", "description": "Número de cama asignada." },
+        "status": { "type": "string", "enum": ["Activo", "Alta"] },
+        "evolutionLogs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "timestamp": { "type": "string", "format": "date-time" },
+              "temp": { "type": "number" },
+              "bp": { "type": "string" },
+              "pulse": { "type": "number" },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "supplies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "qty": { "type": "number" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["patientId", "bed", "status"]
+    },
+    "Inventory": {
+      "title": "Inventario",
+      "description": "Stock de medicamentos e insumos.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nombre del artículo." },
+        "stock": { "type": "number", "description": "Cantidad actual en stock." },
+        "unit": { "type": "string", "description": "Unidad de medida (ej. tabletas, viales)." },
+        "threshold": { "type": "number", "description": "Umbral de alerta de stock bajo." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "stock", "unit", "threshold"]
+    },
+    "User": {
+      "title": "Usuario",
+      "description": "Un miembro del personal de la clínica.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["Médico", "Enfermero", "Recepcionista", "Admin"] },
+        "name": { "type": "string" }
+      },
+      "required": ["email", "role", "name"]
+    }
+  },
+  "firestore": {
+    "/patients/{patientId}": { "schema": "Patient", "description": "Registros de pacientes." },
+    "/consultations/{consultationId}": { "schema": "Consultation", "description": "Registros de consultas." },
+    "/hospitalizations/{hospitalizationId}": { "schema": "Hospitalization", "description": "Registros de hospitalización." },
+    "/inventory/{itemId}": { "schema": "Inventory", "description": "Registros de inventario." },
+    "/users/{userId}": { "schema": "User", "description": "Perfiles de usuario." }
+  }
+}

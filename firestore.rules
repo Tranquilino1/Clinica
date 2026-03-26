@@ -1,0 +1,112 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Modelo de Datos Asumido
+    // ===============================================================
+    //
+    // Colección: patients
+    // Campos: id, name, dob, gender, history, familyHistory, createdAt
+    //
+    // Colección: consultations
+    // Campos: patientId, doctorId, reason, diagnosis, treatment, recommendations, createdAt
+    //
+    // Colección: hospitalizations
+    // Campos: patientId, bed, status, evolutionLogs, supplies, createdAt
+    //
+    // Colección: inventory
+    // Campos: name, stock, unit, threshold, createdAt
+    //
+    // Colección: users
+    // Campos: email, role, name
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Funciones Auxiliares
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        getUserData().role == 'Admin' ||
+        (request.auth.token.email == "thetrapkinzofafrica@gmail.com" && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isDoctor() { return hasRole('Médico') || isAdmin(); }
+    function isNurse() { return hasRole('Enfermero') || isAdmin(); }
+    function isReceptionist() { return hasRole('Recepcionista') || isAdmin(); }
+
+    // ===============================================================
+    // Funciones de Validación
+    // ===============================================================
+    function isValidPatient(data) {
+      return data.id is string && data.id.size() > 0 &&
+             data.name is string && data.name.size() > 0 &&
+             data.dob is string && data.gender in ['Masculino', 'Femenino', 'Otro'];
+    }
+
+    function isValidConsultation(data) {
+      return data.patientId is string && data.doctorId is string &&
+             data.reason is string && data.reason.size() > 0;
+    }
+
+    function isValidHospitalization(data) {
+      return data.patientId is string && data.bed is string &&
+             data.status in ['Activo', 'Alta'];
+    }
+
+    function isValidInventory(data) {
+      return data.name is string && data.stock is number &&
+             data.threshold is number && data.unit is string;
+    }
+
+    // ===============================================================
+    // Reglas
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAdmin();
+    }
+
+    match /patients/{patientId} {
+      allow read: if isAuthenticated();
+      allow create: if isReceptionist() && isValidPatient(request.resource.data);
+      allow update: if (isReceptionist() || isDoctor()) && isValidPatient(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /consultations/{consultationId} {
+      allow read: if isAuthenticated();
+      allow create: if isDoctor() && isValidConsultation(request.resource.data);
+      allow update: if isDoctor() && isValidConsultation(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /hospitalizations/{hospitalizationId} {
+      allow read: if isAuthenticated();
+      allow create: if isDoctor() && isValidHospitalization(request.resource.data);
+      allow update: if (isDoctor() || isNurse()) && isValidHospitalization(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    match /inventory/{itemId} {
+      allow read: if isAuthenticated();
+      allow create: if (isAdmin() || isNurse()) && isValidInventory(request.resource.data);
+      allow update: if (isAdmin() || isNurse() || isDoctor()) && isValidInventory(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}
